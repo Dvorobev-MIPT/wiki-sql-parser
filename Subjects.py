@@ -1,52 +1,64 @@
 import time
 from selenium import webdriver
-from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from alive_progress import alive_bar
 
+
+import SQL_functions
 from Parser import parser
 from Attribute_getter import attribute_getter
 
-# добавить исключения все
-# залогинить их
-# и останосить программу
-# кроме "хороших" except
 
 class subjects(parser, attribute_getter):
-    def __init__(self, main_link, load_time):
+    def __init__(self, conn, main_link, load_time):
+        self.conn = conn
         self.main_link = main_link
         self.load_time = load_time
         chrome_options = Options()
         chrome_options.add_argument("--headless")  # Runs Chrome in headless mode.
         self.driver = webdriver.Chrome(options = chrome_options)  # Инициализируем драйвер один раз\
 
-    def _get_teachers_names(self):
-        try:
-            elements = WebDriverWait(self.driver, 0.1).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".gallerytext p a"))
-            )
-            names = [element.text for element in elements]
-            return names
-        except TimeoutException:
-            return []
-        except NoSuchElementException:
-            return []
 
     def _put_subjects_in_table(self, link):
         # Открываем страницу
         self.driver.get(link)
         time.sleep(self.load_time)
 
-        print(self.driver.find_element(By.ID, 'firstHeading').text) # name
-        print(self._get_maybe_none_attr('Читается на кафедрах'))
-        #print(self._get_description())
-        print(self._get_teachers_names())
+        self.name = self.driver.find_element(By.ID, 'firstHeading').text
+        self.depatments = self._get_maybe_none_attr('Читается на кафедрах')
 
+    def _insert_subject(self):
+        query = """
+        INSERT INTO subjects (name)     
+        VALUES (%s)
+        RETURNING subject_id;
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, (self.name,))
+            self.subject_id = cursor.fetchone()[0]
+            self.conn.commit()
+
+    def _insert_department_subject(self):
+        query = """
+        INSERT INTO department_subject (department_id, subject_id)
+        VALUES (%s, %s)
+        ON CONFLICT (department_id, subject_id) DO NOTHING;
+        """
+        with self.conn.cursor() as cursor:
+            department_id = SQL_functions.get_pk_by_column_value(self.conn, "departments",
+                                                                         "department_id","name", self.depatments)
+            if (department_id):
+                cursor.execute(query, (department_id, self.subject_id))
+                self.conn.commit()
 
     def put_all_subjects_in_table(self):
         links = self.parse_links()
-        for link in links:         # цикл по всем ссылкам на преподавателей
-            self._put_subjects_in_table(link)
+        print("Парсинг страниц предметов (займет не более 2 минут)")
+        with alive_bar(len(links), force_tty=True) as bar:
+            for link in links:         # цикл по всем ссылкам на преподавателей
+                bar()
+                self._put_subjects_in_table(link)
+                self._insert_subject()
+                self._insert_department_subject()
         self.driver.quit()

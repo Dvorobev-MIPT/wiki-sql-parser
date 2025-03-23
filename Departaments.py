@@ -5,17 +5,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from alive_progress import alive_bar
 
 from Parser import parser
 from Attribute_getter import attribute_getter
 
-# добавить исключения все
-# залогинить их
-# и останосить программу
-# кроме "хороших" except
-
 class departments(parser, attribute_getter):
-    def __init__(self, main_link, load_time):
+    def __init__(self, conn, main_link, load_time):
+        self.conn = conn
         self.main_link = main_link
         self.load_time = load_time
         chrome_options = Options()
@@ -30,7 +27,6 @@ class departments(parser, attribute_getter):
             next_page_url = next_page.get_attribute('href')
         except:
             next_page_url = None
-        print(next_page_url)
 
     def _get_teachers_name(self, id):
         try:
@@ -62,24 +58,35 @@ class departments(parser, attribute_getter):
         self.driver.get(link)
         time.sleep(self.load_time)
 
-        print(self.driver.find_element(By.ID, 'firstHeading').text) # name
-        print(self._get_maybe_none_attr('Тип'))
-        print(self._get_maybe_none_attr('Факультет'))
-        print(self._get_maybe_none_attr('Заведующий кафедрой'))
-        print(self._get_site_url())
-        print(self._get_subjects_list_by_css('ul.smw-format li.smw-row a')) # subjects
-        print(self._get_teachers_name("Преподаватели_кафедры"))
-        print(self._get_teachers_name("Бывшие_преподаватели_кафедры"))
-        print(self._get_maybe_none_attr("Базовая организация"))
+        self.name = self.driver.find_element(By.ID, 'firstHeading').text
+        self.type = self._get_maybe_none_attr('Тип')
+        self.faculty = self._get_maybe_none_attr('Факультет')
+        self.leader = self._get_maybe_none_attr('Заведующий кафедрой')
+        self.website = self._get_site_url()
+        self._get_subjects_list_by_css('ul.smw-format li.smw-row a')
 
-       # print('Знания:', self._get_estimation('expert'))
-       # print('Умение преподавать:', self._get_estimation('instructor'))
-       # print('В общении:', self._get_estimation('communication'))
-       # print('Халявность:', self._get_estimation('freebie'))
-       # print('Общая оценка:', self._get_estimation('total'))
+
+        self.base_organizations = self._get_maybe_none_attr("Базовая организация")
+
+
+
+    def _insert_department(self):
+        query = """
+        INSERT INTO departments (name, type, leader, website, faculty, base_organizations)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING department_id;
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, (self.name, self.type, self.leader, self.website, self.faculty, self.base_organizations))
+            self.department_id = cursor.fetchone()[0]
+            self.conn.commit()
 
     def put_all_departments_in_table(self):
         links = self.parse_links()
-        for link in links:         # цикл по всем ссылкам на преподавателей
-            self._put_departments_in_table(link)
+        print("Парсинг страниц кафедр (займет не более 2 минут)")
+        with alive_bar(len(links), force_tty=True) as bar:
+            for link in links:         # цикл по всем ссылкам на преподавателей
+                self._put_departments_in_table(link)
+                self._insert_department()
+                bar()
         self.driver.quit()

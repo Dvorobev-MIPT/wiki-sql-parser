@@ -4,10 +4,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
-# добавить исключения все
-# залогинить их
-# и останосить программу
-# кроме "хороших" except
 
 class parser:
     def __init__(self, main_link):
@@ -20,6 +16,8 @@ class parser:
         next_page_url = self.main_link
         links = []  # Список для хранения ссылок
 
+        print("Парсинг ссылок (займет не более 10 секунд)")
+
         while next_page_url:
             self.driver.get(next_page_url)
 
@@ -30,7 +28,6 @@ class parser:
                 next_page_url = next_page.get_attribute('href')
             except:
                 next_page_url = None
-            print(next_page_url)
 
             # Находим элементы, содержащие ссылки на преподавателей
             elements = self.driver.find_elements(By.CLASS_NAME, "mw-category-group")
@@ -39,9 +36,4 @@ class parser:
                 for a in a_tags:
                     links.append(a.get_attribute("href"))
 
-        # Выводим все ссылки
-        for link in links:
-            print(link)
-
-        print(len(links))
         return links
