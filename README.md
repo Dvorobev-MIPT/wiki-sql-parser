@@ -2,6 +2,12 @@
 
 ## Запуск
 
+### Используемые библиотеки
+
+1. selenium
+2. alive-progress
+3. psycopg2
+
 ### Создание/обновление БД
 Для начала надо создать базу данных: CREATE DATABASE phystech_wiki;
 
