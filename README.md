@@ -23,7 +23,7 @@
 
 В результате парсинга получется БД, представленная на схеме ниже:
 
-![alt text](https://github.com/Dvorobev-MIPT/wiki-sql-parser/blob/main/Example.jpg)
+![alt text](https://github.com/Dvorobev-MIPT/wiki-sql-parser/blob/main/Image/Example.jpg)
 
 
 Заметим, что на данный момент в другом моем проекте она использует не весь свой функционал.
