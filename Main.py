@@ -1,17 +1,17 @@
 import psycopg2
 
-import Teachers
-import Departaments
-import Subjects
-import SQL_functions
+from Objects import Teachers
+from Objects import Departaments
+from Objects import Subjects
+from SQL_function import SQL_functions
 
 # поля для ввода данных
 conn = psycopg2.connect(
     database="phystech_wiki",
-    user="postgres",
-    password="Slash1965",
-    host="localhost",
-    port="5432"
+    user="YOUR_USERNAME",
+    password="YOUR_PASSWORD",
+    host="YOUR_HOST",
+    port="YOUR_PORT"
 )
 
 long_load_time = 0.5    # для страниц преподавателей (min 0.5 !!!)

@@ -3,12 +3,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
 from alive_progress import alive_bar
-
-
-import SQL_functions
-from Parser import parser
-from Attribute_getter import attribute_getter
 from datetime import datetime
+
+from SQL_function import SQL_functions
+from Parser.Parser import parser
+from Parser.Attribute_getter import attribute_getter
 
 
 class teachers(parser, attribute_getter):

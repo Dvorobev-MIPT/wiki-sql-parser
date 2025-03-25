@@ -7,8 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from alive_progress import alive_bar
 
-from Parser import parser
-from Attribute_getter import attribute_getter
+from Parser.Parser import parser
+from Parser.Attribute_getter import attribute_getter
 
 class departments(parser, attribute_getter):
     def __init__(self, conn, main_link, load_time):

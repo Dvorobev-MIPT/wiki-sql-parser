@@ -5,9 +5,9 @@ from selenium.webdriver.chrome.options import Options
 from alive_progress import alive_bar
 
 
-import SQL_functions
-from Parser import parser
-from Attribute_getter import attribute_getter
+from SQL_function import SQL_functions
+from Parser.Parser import parser
+from Parser.Attribute_getter import attribute_getter
 
 
 class subjects(parser, attribute_getter):
